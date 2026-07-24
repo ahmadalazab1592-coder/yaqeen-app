@@ -325,10 +325,16 @@ export default function YaqeenApp() {
 
     return () => {
       cancelAnimationFrame(animationId);
-      if (threeCanvasRef.current && renderer.domElement) threeCanvasRef.current.removeChild(renderer.domElement);
+      // التعديل هنا: فحص الأمان (contains) قبل الحذف لتجنب انهيار التطبيق
+      if (threeCanvasRef.current && renderer.domElement) {
+        if (threeCanvasRef.current.contains(renderer.domElement)) {
+          threeCanvasRef.current.removeChild(renderer.domElement);
+        }
+      }
       renderer.dispose();
     };
   }, [results, userLocation, threeLoaded]);
+  
 
   // ==========================================
   // 5. العداد التنازلي
