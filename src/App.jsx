@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Moon, MapPin, Globe, Info, Calendar, X, Hourglass, Rotate3D, Star, Quote } from 'lucide-react';
 
 // ==========================================
-// 1. المحرك الفلكي (تطبيق يقين)
+// 1. المحرك الفلكي الدقيق (خوارزمية Jean Meeus)
 // ==========================================
 const SYNODIC_MONTH_MS = 29.53058868 * 24 * 60 * 60 * 1000;
 const BASE_HIJRI_YEAR = 1447;
@@ -21,9 +21,67 @@ const generateYears = () => {
   return years;
 };
 
+// دالة مساعدة لحساب الجيب بالدرجات
+const sinDeg = (deg) => Math.sin(deg * Math.PI / 180.0);
+
+// محرك الحساب الدقيق للاقتران
+const getTrueConjunction = (approximateDateMs) => {
+    let jdApprox = (approximateDateMs / 86400000.0) + 2440587.5;
+    let k = Math.round((jdApprox - 2451550.09766) / 29.530588861);
+    
+    let T = k / 1236.85;
+    let T2 = T * T;
+    let T3 = T2 * T;
+    let T4 = T3 * T;
+    
+    let jdMean = 2451550.09766 + 29.530588861 * k 
+                + 0.0001337 * T2 
+                - 0.000000150 * T3 
+                + 0.00000000073 * T4;
+    
+    let M = 2.5534 + 29.10535670 * k - 0.0000218 * T2 - 0.00000011 * T3;
+    let Mprime = 201.5643 + 385.81693528 * k + 0.0107582 * T2 + 0.00001238 * T3;
+    let F = 160.7108 + 390.67050284 * k - 0.0016118 * T2 - 0.00000227 * T3;
+    let OM = 124.7746 - 1.56375588 * k + 0.0020672 * T2 + 0.00000215 * T3;
+    let E = 1 - 0.002516 * T - 0.0000074 * T2;
+    
+    let correction = 
+        -0.40720 * sinDeg(Mprime) 
+        + 0.17241 * E * sinDeg(M) 
+        + 0.01608 * sinDeg(2 * Mprime) 
+        + 0.01039 * sinDeg(2 * F) 
+        + 0.00739 * E * sinDeg(Mprime - M) 
+        - 0.00514 * E * sinDeg(Mprime + M) 
+        + 0.00208 * E * E * sinDeg(2 * M) 
+        - 0.00111 * sinDeg(Mprime - 2 * F) 
+        - 0.00057 * sinDeg(Mprime + 2 * F) 
+        + 0.00056 * E * sinDeg(2 * Mprime + M) 
+        - 0.00042 * sinDeg(3 * Mprime) 
+        + 0.00042 * E * sinDeg(M + 2 * F) 
+        + 0.00038 * E * sinDeg(M - 2 * F) 
+        - 0.00024 * E * sinDeg(2 * Mprime - M) 
+        - 0.00017 * sinDeg(OM) 
+        - 0.00007 * sinDeg(Mprime + 2 * M) 
+        + 0.00004 * sinDeg(2 * Mprime - 2 * F) 
+        + 0.00004 * sinDeg(3 * M) 
+        + 0.00003 * sinDeg(Mprime + M - 2 * F) 
+        + 0.00003 * sinDeg(2 * Mprime + 2 * F) 
+        - 0.00003 * sinDeg(Mprime + M + 2 * F) 
+        + 0.00003 * sinDeg(Mprime - M + 2 * F) 
+        - 0.00002 * sinDeg(Mprime - M - 2 * F) 
+        - 0.00002 * sinDeg(3 * Mprime + M) 
+        + 0.00002 * sinDeg(4 * Mprime);
+        
+    let jdTrue = jdMean + correction;
+    let unixTimeMs = (jdTrue - 2440587.5) * 86400000.0;
+    
+    return new Date(unixTimeMs);
+};
+
 const getConjunctionTime = (hijriYear, monthIndex) => {
   const totalMonthsDiff = ((hijriYear - BASE_HIJRI_YEAR) * 12) + (monthIndex - BASE_HIJRI_MONTH);
-  return new Date(BASE_CONJUNCTION_MS + (totalMonthsDiff * SYNODIC_MONTH_MS));
+  const approximateMs = BASE_CONJUNCTION_MS + (totalMonthsDiff * SYNODIC_MONTH_MS);
+  return getTrueConjunction(approximateMs);
 };
 
 const getGregorianDateString = (date) => {
@@ -43,6 +101,10 @@ export default function YaqeenApp() {
   const [countdown, setCountdown] = useState(null);
   const [threeLoaded, setThreeLoaded] = useState(false);
   
+  // حالات الفيديو الترحيبي
+  const [showSplash, setShowSplash] = useState(true);
+  const [fadeSplash, setFadeSplash] = useState(false);
+  
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markerInstance = useRef(null);
@@ -50,6 +112,11 @@ export default function YaqeenApp() {
   const threeSceneRef = useRef(null);
 
   const availableYears = generateYears();
+
+  const handleVideoEnd = () => {
+    setFadeSplash(true);
+    setTimeout(() => setShowSplash(false), 800); 
+  };
 
   // ==========================================
   // 2. تحميل المكتبات 
@@ -325,7 +392,6 @@ export default function YaqeenApp() {
 
     return () => {
       cancelAnimationFrame(animationId);
-      // التعديل هنا: فحص الأمان (contains) قبل الحذف لتجنب انهيار التطبيق
       if (threeCanvasRef.current && renderer.domElement) {
         if (threeCanvasRef.current.contains(renderer.domElement)) {
           threeCanvasRef.current.removeChild(renderer.domElement);
@@ -371,12 +437,32 @@ export default function YaqeenApp() {
   };
 
   const uiData = getMonthSpecificUI();
-
   const displayedGregorianYear = getConjunctionTime(selectedYear || BASE_HIJRI_YEAR, selectedMonth).getUTCFullYear();
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 pb-12" dir="rtl" style={{ fontFamily: "'Asmaa', 'Cairo', system-ui, -apple-system, sans-serif" }}>
       
+      {/* ========================================== */}
+      {/* شاشة الفيديو الافتتاحية المدمجة */}
+      {/* ========================================== */}
+      {showSplash && (
+        <div 
+          className="fixed inset-0 z-[10000] bg-slate-50 flex justify-center items-center"
+          style={{ opacity: fadeSplash ? 0 : 1, transition: 'opacity 0.8s ease' }}
+        >
+          <video 
+            autoPlay 
+            muted 
+            playsInline 
+            onEnded={handleVideoEnd}
+            onError={handleVideoEnd}
+            className="w-full h-full object-cover"
+          >
+            <source src="intro.mp4" type="video/mp4" />
+          </video>
+        </div>
+      )}
+
       <header className="bg-indigo-900 text-white p-6 shadow-lg rounded-b-3xl relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4 text-center md:text-right flex-col md:flex-row">
