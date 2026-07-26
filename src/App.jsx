@@ -458,8 +458,13 @@ export default function YaqeenApp() {
       {/* ========================================== */}
       {showSplash && (
         <div 
-          className="fixed inset-0 z-[10000] bg-slate-50 flex justify-center items-center"
-          style={{ opacity: fadeSplash ? 0 : 1, transition: 'opacity 0.8s ease' }}
+          className="fixed inset-0 z-[10000] flex justify-center items-center"
+          style={{ 
+            opacity: fadeSplash ? 0 : 1, 
+            transition: 'opacity 0.8s ease',
+            // أضفنا نفس التدرج اللوني لدمج المساحات الفارغة أعلى وأسفل الفيديو
+            background: 'linear-gradient(to bottom, #D6E3F0, #F1E6EA)' 
+          }}
         >
           <video 
             autoPlay 
@@ -467,7 +472,7 @@ export default function YaqeenApp() {
             playsInline 
             onEnded={handleVideoEnd}
             onError={handleVideoEnd}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain" /* التغيير السحري هنا لاحتواء المشهد بالكامل */
           >
             <source src="intro.mp4" type="video/mp4" />
           </video>
