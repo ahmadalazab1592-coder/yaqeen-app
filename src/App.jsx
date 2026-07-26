@@ -436,6 +436,17 @@ export default function YaqeenApp() {
     }
   };
 
+  // دالة لتحديد تنسيق الشهر بناءً على الفهرس
+  const getMonthStyle = (index) => {
+    switch (index) {
+      case 0: return { color: '#2563EB', fontWeight: 'bold' }; // المحرم
+      case 8: return { color: '#059669', fontWeight: 'bold' }; // رمضان
+      case 9: return { color: '#D97706', fontWeight: 'bold' }; // شوال
+      case 11: return { color: '#7C3AED', fontWeight: 'bold' }; // ذو الحجة
+      default: return { color: '#1E293B', fontWeight: 'normal' }; // باقي الأشهر
+    }
+  };
+
   const uiData = getMonthSpecificUI();
   const displayedGregorianYear = getConjunctionTime(selectedYear || BASE_HIJRI_YEAR, selectedMonth).getUTCFullYear();
 
@@ -500,7 +511,7 @@ export default function YaqeenApp() {
           {/* النص التعريفي */}
           <div className="relative z-10 text-center max-w-4xl">
             <p className="text-indigo-950 text-lg md:text-xl leading-loose font-medium">
-              هذا التصميم يقضي تماماً على أي إمكانية لأن يتقدم بلد عن بلد آخر بيوم كامل بشكل عشوائي، بل يجعل البشرية كلها تصوم وتفطر بشكل متسلسل يشبه "موجة متتالية" تبدأ من نقطة محددة وتطوف الأرض كلها في 24 ساعة بالضبط.
+              هذا التطبيق يقضي تماماً على أي إمكانية لأن يتقدم بلد عن بلد آخر بيوم كامل بشكل عشوائي، بل يجعل البشرية كلها تصوم وتفطر بشكل متسلسل يشبه "موجة متتالية" تبدأ من نقطة محددة وتطوف الأرض كلها في 24 ساعة بالضبط.
             </p>
           </div>
         </div>
@@ -509,7 +520,7 @@ export default function YaqeenApp() {
             <label className="font-bold flex items-center gap-2 text-indigo-900"><Calendar size={20}/> الشهر القمري المطلوب:</label>
             <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} className="w-full p-3 rounded-xl border-2 border-slate-200 bg-slate-50 font-bold focus:border-indigo-500 outline-none">
               {HIJRI_MONTHS.map((month, index) => (
-                <option key={index} value={index}>{month}</option>
+                <option key={index} value={index} style={getMonthStyle(index)}>{month}</option>
               ))}
             </select>
           </div>
