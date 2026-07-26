@@ -110,7 +110,7 @@ export default function YaqeenApp() {
   const markerInstance = useRef(null);
   const threeCanvasRef = useRef(null);
   const threeSceneRef = useRef(null);
-
+  const resultsRef = useRef(null);
   const availableYears = generateYears();
 
   const handleVideoEnd = () => {
@@ -227,6 +227,19 @@ export default function YaqeenApp() {
   useEffect(() => {
     if (userLocation && selectedYear >= 1400 && selectedYear <= 2400) performCalculations();
   }, [userLocation, selectedYear, selectedMonth]);
+
+  // ==========================================
+  // التمرير التلقائي السلس للأسفل عند النقر على الخريطة
+  // ==========================================
+  useEffect(() => {
+    if (userLocation) {
+      setTimeout(() => {
+        if (resultsRef.current) {
+          resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 150);
+    }
+  }, [userLocation]);
 
   // ==========================================
   // 4. المحرك الثلاثي الأبعاد
@@ -594,7 +607,7 @@ export default function YaqeenApp() {
         </div>
 
         {userLocation && (
-          <div className="space-y-8 pb-8">
+          <div ref={resultsRef} className="space-y-8 pb-8 mt-8 scroll-mt-6">
             {isLoading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
