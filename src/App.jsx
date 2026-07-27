@@ -101,7 +101,6 @@ export default function YaqeenApp() {
   const [countdown, setCountdown] = useState(null);
   const [threeLoaded, setThreeLoaded] = useState(false);
   
-  // حالات الفيديو الترحيبي
   const [showSplash, setShowSplash] = useState(true);
   const [fadeSplash, setFadeSplash] = useState(false);
   
@@ -228,9 +227,6 @@ export default function YaqeenApp() {
     if (userLocation && selectedYear >= 1400 && selectedYear <= 2400) performCalculations();
   }, [userLocation, selectedYear, selectedMonth]);
 
-  // ==========================================
-  // التمرير التلقائي السلس للأسفل عند النقر على الخريطة
-  // ==========================================
   useEffect(() => {
     if (userLocation) {
       setTimeout(() => {
@@ -373,8 +369,17 @@ export default function YaqeenApp() {
 
     const arcPoints = [];
     let lngDiff = userLocation.lng - targetLng;
-    if (lngDiff > 180) lngDiff -= 360;
-    if (lngDiff < -180) lngDiff += 360;
+    
+    // ==========================================
+    // التعديل السحري لمعالجة خط دوران الأرض:
+    // إجبار القوس على أن يُرسم في الاتجاه السالب (غرباً) دائماً
+    // ==========================================
+    while (lngDiff > 0) {
+        lngDiff -= 360;
+    }
+    while (lngDiff <= -360) {
+        lngDiff += 360;
+    }
 
     const steps = 60;
     for (let i = 0; i <= steps; i++) {
@@ -449,14 +454,13 @@ export default function YaqeenApp() {
     }
   };
 
-  // دالة لتحديد تنسيق الشهر بناءً على الفهرس
   const getMonthStyle = (index) => {
     switch (index) {
-      case 0: return { color: '#2563EB', fontWeight: 'bold' }; // المحرم
-      case 8: return { color: '#059669', fontWeight: 'bold' }; // رمضان
-      case 9: return { color: '#D97706', fontWeight: 'bold' }; // شوال
-      case 11: return { color: '#7C3AED', fontWeight: 'bold' }; // ذو الحجة
-      default: return { color: '#1E293B', fontWeight: 'normal' }; // باقي الأشهر
+      case 0: return { color: '#2563EB', fontWeight: 'bold' }; 
+      case 8: return { color: '#059669', fontWeight: 'bold' }; 
+      case 9: return { color: '#D97706', fontWeight: 'bold' }; 
+      case 11: return { color: '#7C3AED', fontWeight: 'bold' }; 
+      default: return { color: '#1E293B', fontWeight: 'normal' }; 
     }
   };
 
@@ -466,16 +470,12 @@ export default function YaqeenApp() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 pb-12" dir="rtl" style={{ fontFamily: "'Asmaa', 'Cairo', system-ui, -apple-system, sans-serif" }}>
       
-      {/* ========================================== */}
-      {/* شاشة الفيديو الافتتاحية المدمجة */}
-      {/* ========================================== */}
       {showSplash && (
         <div 
           className="fixed inset-0 z-[10000] flex justify-center items-center"
           style={{ 
             opacity: fadeSplash ? 0 : 1, 
             transition: 'opacity 0.8s ease',
-            // أضفنا نفس التدرج اللوني لدمج المساحات الفارغة أعلى وأسفل الفيديو
             background: 'linear-gradient(to bottom, #D6E3F0, #F1E6EA)' 
           }}
         >
@@ -485,7 +485,7 @@ export default function YaqeenApp() {
             playsInline 
             onEnded={handleVideoEnd}
             onError={handleVideoEnd}
-            className="w-full h-full object-contain" /* التغيير السحري هنا لاحتواء المشهد بالكامل */
+            className="w-full h-full object-contain" 
           >
             <source src="intro.mp4" type="video/mp4" />
           </video>
@@ -509,14 +509,9 @@ export default function YaqeenApp() {
 
       <main className="max-w-5xl mx-auto px-4 space-y-8 mt-8">
         
-        {/* ========================================== */}
-        {/* إضافة النص الترحيبي (البيان التأسيسي والآية) */}
-        {/* ========================================== */}
         <div className="bg-indigo-50/80 border border-indigo-100 rounded-3xl p-8 shadow-sm flex flex-col items-center gap-6 relative overflow-hidden">
-          {/* لمسة تصميمية (علامة اقتباس خلفية) */}
           <Quote className="text-indigo-500/10 absolute top-4 right-4 rotate-180" size={80} />
           
-          {/* الآية القرآنية بخط المصحف */}
           <div className="relative z-10 text-center w-full border-b border-indigo-200/60 pb-6">
             <span 
               className="text-3xl md:text-4xl text-emerald-800 leading-relaxed" 
@@ -526,7 +521,6 @@ export default function YaqeenApp() {
             </span>
           </div>
           
-          {/* النص التعريفي */}
           <div className="relative z-10 text-center max-w-4xl">
             <p className="text-indigo-950 text-lg md:text-xl leading-loose font-medium">
               هذا التطبيق يقضي تماماً على أي إمكانية لأن يتقدم بلد عن بلد آخر بيوم كامل بشكل عشوائي، بل يجعل البشرية كلها تصوم وتفطر بشكل متسلسل يشبه "موجة متتالية" تبدأ من نقطة محددة وتطوف الأرض كلها في 24 ساعة بالضبط.
