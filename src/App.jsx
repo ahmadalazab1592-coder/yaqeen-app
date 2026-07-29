@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Moon, MapPin, Globe, Info, Calendar, X, Hourglass, Rotate3D, Star, Quote } from 'lucide-react';
+import { Moon, MapPin, Globe, Info, Calendar, X, Hourglass, Rotate3D, Star, Quote, BookOpen } from 'lucide-react';
 
 // ==========================================
 // 1. المحرك الفلكي الدقيق (خوارزمية Jean Meeus)
@@ -132,7 +132,7 @@ export default function YaqeenApp() {
       if (!document.getElementById('arabic-font-fallback')) {
         const fontLink = document.createElement('link');
         fontLink.id = 'arabic-font-fallback';
-        fontLink.href = 'https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap';
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Amiri&family=Cairo:wght@400;700;900&display=swap';
         fontLink.rel = 'stylesheet';
         document.head.appendChild(fontLink);
       }
@@ -370,10 +370,6 @@ export default function YaqeenApp() {
     const arcPoints = [];
     let lngDiff = userLocation.lng - targetLng;
     
-    // ==========================================
-    // التعديل السحري لمعالجة خط دوران الأرض:
-    // إجبار القوس على أن يُرسم في الاتجاه السالب (غرباً) دائماً
-    // ==========================================
     while (lngDiff > 0) {
         lngDiff -= 360;
     }
@@ -514,8 +510,8 @@ export default function YaqeenApp() {
           
           <div className="relative z-10 text-center w-full border-b border-indigo-200/60 pb-6">
             <span 
-              className="text-3xl md:text-4xl text-emerald-800 leading-relaxed" 
-              style={{ fontFamily: "'Amiri Quran', serif", wordSpacing: '2px' }}
+              className="text-3xl md:text-4xl text-emerald-800 leading-relaxed font-bold" 
+              style={{ fontFamily: "'Amiri', 'Amiri Quran', serif", wordSpacing: '2px' }}
             >
               ﴿ فَمَن شَهِدَ مِنكُمُ الشَّهْرَ فَلْيَصُمْهُ ﴾
             </span>
@@ -698,31 +694,177 @@ export default function YaqeenApp() {
         )}
       </main>
 
+      {/* ========================================== */}
+      {/* نافذة "عن التطبيق" المطورة (المقال الشامل) */}
+      {/* ========================================== */}
       {isAboutOpen && (
-        <div className="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
-            <button onClick={() => setIsAboutOpen(false)} className="absolute top-6 left-6 p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition"><X size={24} className="text-slate-600" /></button>
+        <div className="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 md:p-6">
+          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative" style={{ scrollBehavior: 'smooth' }}>
+            <button onClick={() => setIsAboutOpen(false)} className="absolute top-6 left-6 p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition z-20">
+              <X size={24} className="text-slate-600" />
+            </button>
+            
             <div className="p-8 md:p-12">
+              
+              {/* ترويسة النافذة */}
               <div className="flex items-center gap-4 mb-8 border-b pb-6">
                 <Globe size={40} className="text-indigo-600" />
                 <h2 className="text-3xl font-black text-indigo-900">عن تطبيق يَقِين</h2>
               </div>
-              <div className="space-y-6 text-lg text-slate-700 leading-relaxed font-medium">
-                <p>في كل عام تتكرر مأساة اختلاف المسلمين في بدايات الشهور والأعياد، وهذا التطبيق هو الحل العلمي والشرعي القطعي لتوحيدها باستخدام حسابات كوكب الأرض.</p>
-                <div className="bg-indigo-50 border-r-4 border-indigo-600 p-6 rounded-l-xl">
-                  <h3 className="font-bold text-indigo-900 text-xl mb-3">القاعدة الصارمة (نقلة الفجر):</h3>
-                  <p>الاقتران المركزي (ميلاد القمر) هو لحظة كونية واحدة لكل الأرض. المنطقة الجغرافية التي يتوافق فجرها تماماً مع لحظة الميلاد تصبح هي "نقطة الصفر".</p>
+              
+              {/* المقدمة القصيرة */}
+<div className="space-y-6 text-lg text-slate-700 leading-relaxed font-medium mb-10">
+  <p>
+    في كل عام تتكرر مأساة اختلاف المسلمين في بدايات الشهور والأعياد، وهذا التطبيق هو الحل العلمي والشرعي القطعي لتوحيدها باستخدام حسابات كوكب الأرض.
+  </p>
+  
+  <div className="bg-indigo-50 border-r-4 border-indigo-600 p-6 rounded-l-xl">
+    <h3 className="font-bold text-indigo-900 text-xl mb-3">القاعدة الصارمة (نقلة الفجر):</h3>
+    <p>
+      الاقتران المركزي (ميلاد القمر) هو لحظة كونية واحدة لكل الأرض. المنطقة الجغرافية التي يتوافق فجرها تماماً مع لحظة الميلاد تصبح هي "نقطة الصفر" العالمية.
+    </p>
+  </div>
+
+  <p>
+    <strong className="text-indigo-900">لماذا الفجر في جميع الشهور؟</strong> لأن المسلم يسأل ليلة الشك (في رمضان أو العيد): "هل أستيقظ غداً صائماً أم مفطراً؟". الفجر هو حد البداية الفعلي لليوم في سياق الصيام. إذا ولد الهلال قبل فجرك، تبدأ شهرك، وإن ولد بعده، تكمل عدتك.
+  </p>
+
+  <p className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-100 p-5 rounded-xl shadow-sm">
+    هذا التطبيق مزود بمحرك فلكي يحسب لحظة الاقتران بدقة متناهية تتفق مع أكبر المواقع العلمية المتخصصة تماماً، مما يتيح لك معرفة أوائل الشهور والأعياد بضغطة زر لقرون قادمة.
+  </p>
+</div>
+
+              {/* بداية المقال الشامل */}
+              <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 md:p-10 shadow-inner">
+                
+                <div className="text-center mb-10">
+                  <h3 className="text-3xl md:text-4xl text-emerald-800 leading-relaxed font-bold mb-4" style={{ fontFamily: "'Amiri', 'Amiri Quran', serif" }}>
+                    ﴿ فَمَن شَهِدَ مِنكُمُ الشَّهْرَ فَلْيَصُمْهُ ﴾
+                  </h3>
+                  <p className="text-xl text-indigo-900 font-bold">دراسة في الصياغة القرآنية وتوحيد صيام المسلمين</p>
                 </div>
-                <p><strong>لماذا الفجر في جميع الشهور؟</strong> لأن المسلم يسأل ليلة الشك (في رمضان أو العيد): "هل أستيقظ غداً صائماً أم مفطراً؟". الفجر هو حد البداية الفعلي لليوم في سياق الصيام. إذا ولد الهلال قبل فجرك، تبدأ شهرك، وإن ولد بعده، تكمل عدتك.</p>
-                <p className="font-bold text-emerald-700 bg-emerald-50 p-4 rounded-lg">
-                  هذا التطبيق مزود بمحرك فلكي يحسب متوسط الاقتران بدقة، مما يتيح لك معرفة أوائل الشهور والأعياد بضغطة زر لقرون قادمة.
-                </p>
+
+                <div className="space-y-8 text-slate-700 leading-loose text-lg font-medium">
+                  <p>
+                    في هذا المقال، سنغوص في دلالات ومعاني الحروف والكلمات في قوله تعالى: <span className="text-emerald-700 font-bold">﴿ فَمَن شَهِدَ مِنكُمُ الشَّهْرَ فَلْيَصُمْهُ ﴾</span>، من خلال تدبر الصياغة القرآنية الدقيقة. هدفنا هو محاولة الإجابة على سؤال طالما شغل بال الكثيرين: هل يمكن توحيد المسلمين في بدء شهر الصيام؟
+                  </p>
+
+                  <div className="bg-white p-6 md:p-8 rounded-2xl border-r-4 border-emerald-500 shadow-sm text-center my-8">
+                    <p className="text-emerald-800 text-xl md:text-2xl leading-loose font-bold" style={{ fontFamily: "'Amiri', 'Amiri Quran', serif" }}>
+                      ﴿ شَهْرُ رَمَضَانَ الَّذِي أُنزِلَ فِيهِ الْقُرْآنُ هُدًى لِّلنَّاسِ وَبَيِّنَاتٍ مِّنَ الْهُدَىٰ وَالْفُرْقَانِ ۚ فَمَن شَهِدَ مِنكُمُ الشَّهْرَ فَلْيَصُمْهُ ۖ وَمَن كَانَ مَرِيضًا أَوْ عَلَىٰ سَفَرٍ فَعِدَّةٌ مِّنْ أَيَّامٍ أُخَرَ ۗ يُرِيدُ اللَّهُ بِكُمُ الْيُسْرَ وَلَا يُرِيدُ بِكُمُ الْعُسْرَ وَلِتُكْمِلُوا الْعِدَّةَ وَلِتُكَبِّرُوا اللَّهَ عَلَىٰ مَا هَدَاكُمْ وَلَعَلَّكُمْ تَشْكُرُونَ ﴾
+                    </p>
+                  </div>
+
+                  {/* القسم الأول */}
+                  <div className="mt-12">
+                    <h4 className="text-2xl font-bold text-indigo-900 border-b-2 border-indigo-100 pb-2 mb-6 flex items-center gap-3">
+                      <span className="w-3 h-3 bg-indigo-500 rounded-full inline-block rotate-45"></span>
+                      ملاحظات حول الصياغة اللغوية
+                    </h4>
+                    <ul className="space-y-6 list-none pr-4 border-r-2 border-indigo-100">
+                      <li className="relative before:absolute before:right-[-1.45rem] before:top-3 before:w-3 before:h-3 before:bg-indigo-400 before:rounded-full">
+                        <strong className="text-indigo-800 text-xl block mb-1">خطاب حالة لا خطاب جماعة أو فرد:</strong> 
+                        الخطاب ليس خطابًا جماعيًا للأمة جمعاء، ولا هو خطاب فردي لشخص بعينه، بل هو "خطاب حالة". تتجلى في استخدام <span className="text-emerald-700 font-bold">"مَن"</span> و<span className="text-emerald-700 font-bold">"مِنكُمُ"</span>، بدلاً من "إذا شهدتم" أو "الذي يشهد".
+                      </li>
+                      <li className="relative before:absolute before:right-[-1.45rem] before:top-3 before:w-3 before:h-3 before:bg-indigo-400 before:rounded-full">
+                        <strong className="text-indigo-800 text-xl block mb-1">دلالة التنكير في "مَن":</strong> 
+                        تفيد تعميم الحالة. "مَن" تعني أن كل من سيشهد الشهر من المسلمين وجب عليه الصيام فورًا، وهذا يختلف عن الخطاب الفردي الذي يترتب عليه أحكام جزئية.
+                      </li>
+                      <li className="relative before:absolute before:right-[-1.45rem] before:top-3 before:w-3 before:h-3 before:bg-indigo-400 before:rounded-full">
+                        <strong className="text-indigo-800 text-xl block mb-1">الفورية في الوجوب:</strong> 
+                        الفاء في <span className="text-emerald-700 font-bold">"فَلْيَصُمْهُ"</span> للترتيب المبني على ما قبله؛ فشهادة الشهر يترتب عليها وجوب الصيام الفوري، واللام تؤكد هذا الوجوب القطعي.
+                      </li>
+                      <li className="relative before:absolute before:right-[-1.45rem] before:top-3 before:w-3 before:h-3 before:bg-indigo-400 before:rounded-full">
+                        <strong className="text-indigo-800 text-xl block mb-1">الماضي في "شَهِدَ" ومعرفة البداية:</strong> 
+                        جاء الفعل بصيغة الماضي ليدل على أن شهادة الشهر (أي معرفة بدايته الواحدة) مسألة قد تمت وعُلمت وتسبق الصيام. ولو جاءت بصيغة المضارع لدلّت على تعدد شهادات الأيام.
+                      </li>
+                      <li className="relative before:absolute before:right-[-1.45rem] before:top-3 before:w-3 before:h-3 before:bg-indigo-400 before:rounded-full">
+                        <strong className="text-indigo-800 text-xl block mb-1">التمييز المكاني في "مِنكُمُ":</strong> 
+                        تشير إلى أن هناك من شهد الشهر وهناك من لم يشهده وقت البداية، وهذا يقودنا إلى فهم عميق لدلالة كلمة الشهادة.
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* القسم الثاني */}
+                  <div className="mt-12">
+                    <h4 className="text-2xl font-bold text-indigo-900 border-b-2 border-indigo-100 pb-2 mb-6 flex items-center gap-3">
+                      <span className="w-3 h-3 bg-teal-500 rounded-full inline-block rotate-45"></span>
+                      دلالات جذر "شهد" في القرآن
+                    </h4>
+                    <p className="mb-6">الجذر "شهد" يعني الإقرار والتأكيد على مسألة بناءً على الإيمان، أو العلم، أو المعايشة (الحضور الزماني والمكاني للحدث). ويتضح الفارق الكبير بين مشتقاته في القرآن كالتالي:</p>
+                    
+                    <div className="grid md:grid-cols-2 gap-6 mb-6">
+                      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-md">
+                        <div className="flex items-center gap-2 mb-3">
+                           <span className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold">1</span>
+                           <h5 className="font-black text-teal-800 text-xl">الشَّاهِد</h5>
+                        </div>
+                        <p className="text-base leading-relaxed text-slate-600">يُقر ويؤكد مسألة يعتقدها بناءً على علمه أو نظره، دون أن يشهدها زمانًا ومكانًا. مثل: <span className="text-emerald-700 font-bold">﴿ وَشَهِدَ شَاهِدٌ مِّنْ أَهْلِهَا ﴾</span> فهو لم يرَ الواقعة بعينه، بل حكم بالاستنتاج والعلم والفراسة.</p>
+                      </div>
+                      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-md">
+                        <div className="flex items-center gap-2 mb-3">
+                           <span className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold">2</span>
+                           <h5 className="font-black text-teal-800 text-xl">الشَّهِيد</h5>
+                        </div>
+                        <p className="text-base leading-relaxed text-slate-600">وهو الذي حضر الحدث وعايشه زمانًا ومكانًا بنفسه. كقوله تعالى: <span className="text-emerald-700 font-bold">﴿ وَاسْتَشْهِدُوا شَهِيدَيْنِ مِن رِّجَالِكُمْ ﴾</span>.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-teal-50 border-r-4 border-teal-500 text-teal-900 p-6 rounded-l-2xl">
+                      <p className="text-lg">
+                        من إعجاز القرآن أن كلمة <span className="text-emerald-700 font-bold">"شَهِدَ"</span> في آية الصيام استوعبت كلا المعنيين معاً: <strong>عاش وحضر</strong> (الحضور الزماني والمكاني)، وكان <strong>صحيحاً عاقلاً يمتلك المعرفة العلمية اليقينية</strong> بحلول الشهر.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* القسم الثالث */}
+                  <div className="mt-12">
+                    <h4 className="text-2xl font-bold text-indigo-900 border-b-2 border-indigo-100 pb-2 mb-6 flex items-center gap-3">
+                      <span className="w-3 h-3 bg-amber-500 rounded-full inline-block rotate-45"></span>
+                      الحضور الزماني والمكاني وتوحيد الصيام
+                    </h4>
+                    <ul className="space-y-6 list-none pr-4 border-r-2 border-amber-200">
+                      <li className="relative before:absolute before:right-[-1.45rem] before:top-3 before:w-3 before:h-3 before:bg-amber-400 before:rounded-full">
+                        <strong className="text-indigo-800 text-xl block mb-1">الحضور الزماني (بداية الشهر):</strong> 
+                        ميلاد الهلال (الاقتران) هو مسألة كونية تحدث لكل الأرض في نفس اللحظة وثانية واحدة.
+                      </li>
+                      <li className="relative before:absolute before:right-[-1.45rem] before:top-3 before:w-3 before:h-3 before:bg-amber-400 before:rounded-full">
+                        <strong className="text-indigo-800 text-xl block mb-1">الحضور المكاني (مِنكُمُ):</strong> 
+                        لو كان الشرط زمانياً فقط، لوجب الصيام على كل الكوكب فور ولادة الهلال ولو كانوا في منتصف الليل! ولكن بسبب كروية الأرض يختلف الحضور المكاني لـ "الفجر"؛ لذا جاء الخطاب لجزء من الأمة (من سيصوم أولاً، ثم من يليه).
+                      </li>
+                      <li className="relative before:absolute before:right-[-1.45rem] before:top-3 before:w-3 before:h-3 before:bg-amber-400 before:rounded-full">
+                        <strong className="text-indigo-800 text-xl block mb-1">تقديم "مِنكُمُ" على "الشَّهْرَ":</strong> 
+                        هذا التقديم البلاغي يؤكد أن وجوب الصيام ارتبط بشرطين لا ينفصلان: الشرط المكاني الخاص (منكم) والشرط الزماني العام (الشهر).
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* الخاتمة */}
+                  <div className="bg-indigo-900 text-white p-8 rounded-3xl shadow-2xl mt-12 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-bl-full"></div>
+                    <h4 className="text-2xl font-bold text-yellow-400 mb-4 relative z-10">نحو تصور عملي لتوحيد صيام المسلمين</h4>
+                    <p className="leading-loose text-lg text-indigo-50 relative z-10">
+                      بناءً على ما سبق، يقدم هذا التطبيق نظاماً يجمع المسلمين على صيام واحد منضبط:
+                      بمجرد ولادة الهلال، ستكون هناك <strong>بقعة واحدة فقط</strong> على الأرض يوافق فيها "وقت الفجر المحلي" لحظة "ولادة الهلال". هذا المكان هو نقطة الصفر وأول من يبدأ الصيام لتطابق الزمان والمكان فيه. 
+                      أما باقي بلدان العالم، فعليها الانتظار حتى يطوف عليها الفجر، لتبدأ الصيام تباعاً، لتكتمل الدورة في 24 ساعة ويصوم جميع المسلمين بناءً على بداية كونية واحدة لا مجال فيها للاختلاف أو الأهواء.
+                    </p>
+                  </div>
+
+                </div>
               </div>
-              <div className="mt-12 pt-6 border-t text-center">
-                <p className="text-slate-500 mb-2">إعداد وتصميم التطبيق</p>
-                <p className="text-2xl font-bold text-indigo-900 font-serif">أحمد طلعت</p>
-                <a href="mailto:ahmadalazab2022@gmail.com" className="text-indigo-600 hover:underline font-mono mt-1 block">ahmadalazab2022@gmail.com</a>
+
+              {/* قسم بيانات المؤلف */}
+              <div className="mt-12 pt-10 border-t border-slate-200 text-center flex flex-col items-center justify-center pb-8">
+                <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-6 shadow-sm border border-indigo-100">
+                  <BookOpen size={36} strokeWidth={1.5} />
+                </div>
+                <p className="text-slate-500 mb-2 font-bold tracking-wider">إعداد فكرة وتصميم التطبيق</p>
+                <p className="text-3xl font-black text-indigo-900 font-serif mb-3">أحمد طلعت</p>
+                <a href="mailto:ahmadalazab2022@gmail.com" className="text-indigo-600 hover:text-indigo-800 hover:underline font-mono text-lg transition-colors bg-indigo-50 px-4 py-2 rounded-lg">
+                  ahmadalazab2022@gmail.com
+                </a>
               </div>
+
             </div>
           </div>
         </div>
