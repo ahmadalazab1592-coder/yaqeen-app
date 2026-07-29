@@ -485,6 +485,15 @@ export default function YaqeenApp() {
           >
             <source src="intro.mp4" type="video/mp4" />
           </video>
+          
+          {/* زر التخطي الجديد */}
+          <button 
+            onClick={handleVideoEnd}
+            className="absolute bottom-10 left-10 bg-white/40 hover:bg-white/60 backdrop-blur-md text-slate-800 px-6 py-2 rounded-full font-bold border border-white/50 shadow-lg transition-all duration-300 flex items-center gap-2 z-50"
+          >
+            تخطي
+            <span className="text-xl leading-none -mt-1">&raquo;</span>
+          </button>
         </div>
       )}
 
