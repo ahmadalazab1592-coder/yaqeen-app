@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Moon, MapPin, Globe, Info, Calendar, X, Hourglass, Rotate3D, Star, Quote, BookOpen } from 'lucide-react';
+import { Moon, MapPin, Globe, Info, Calendar, X, Hourglass, Rotate3D, Star, Quote, BookOpen, Download, Eye } from 'lucide-react';
+import html2canvas from 'html2canvas';
 
 // ==========================================
 // 1. المحرك الفلكي الدقيق (خوارزمية Jean Meeus)
@@ -21,10 +22,8 @@ const generateYears = () => {
   return years;
 };
 
-// دالة مساعدة لحساب الجيب بالدرجات
 const sinDeg = (deg) => Math.sin(deg * Math.PI / 180.0);
 
-// محرك الحساب الدقيق للاقتران
 const getTrueConjunction = (approximateDateMs) => {
     let jdApprox = (approximateDateMs / 86400000.0) + 2440587.5;
     let k = Math.round((jdApprox - 2451550.09766) / 29.530588861);
@@ -35,9 +34,7 @@ const getTrueConjunction = (approximateDateMs) => {
     let T4 = T3 * T;
     
     let jdMean = 2451550.09766 + 29.530588861 * k 
-                + 0.0001337 * T2 
-                - 0.000000150 * T3 
-                + 0.00000000073 * T4;
+                + 0.0001337 * T2 - 0.000000150 * T3 + 0.00000000073 * T4;
     
     let M = 2.5534 + 29.10535670 * k - 0.0000218 * T2 - 0.00000011 * T3;
     let Mprime = 201.5643 + 385.81693528 * k + 0.0107582 * T2 + 0.00001238 * T3;
@@ -46,30 +43,14 @@ const getTrueConjunction = (approximateDateMs) => {
     let E = 1 - 0.002516 * T - 0.0000074 * T2;
     
     let correction = 
-        -0.40720 * sinDeg(Mprime) 
-        + 0.17241 * E * sinDeg(M) 
-        + 0.01608 * sinDeg(2 * Mprime) 
-        + 0.01039 * sinDeg(2 * F) 
-        + 0.00739 * E * sinDeg(Mprime - M) 
-        - 0.00514 * E * sinDeg(Mprime + M) 
-        + 0.00208 * E * E * sinDeg(2 * M) 
-        - 0.00111 * sinDeg(Mprime - 2 * F) 
-        - 0.00057 * sinDeg(Mprime + 2 * F) 
-        + 0.00056 * E * sinDeg(2 * Mprime + M) 
-        - 0.00042 * sinDeg(3 * Mprime) 
-        + 0.00042 * E * sinDeg(M + 2 * F) 
-        + 0.00038 * E * sinDeg(M - 2 * F) 
-        - 0.00024 * E * sinDeg(2 * Mprime - M) 
-        - 0.00017 * sinDeg(OM) 
-        - 0.00007 * sinDeg(Mprime + 2 * M) 
-        + 0.00004 * sinDeg(2 * Mprime - 2 * F) 
-        + 0.00004 * sinDeg(3 * M) 
-        + 0.00003 * sinDeg(Mprime + M - 2 * F) 
-        + 0.00003 * sinDeg(2 * Mprime + 2 * F) 
-        - 0.00003 * sinDeg(Mprime + M + 2 * F) 
-        + 0.00003 * sinDeg(Mprime - M + 2 * F) 
-        - 0.00002 * sinDeg(Mprime - M - 2 * F) 
-        - 0.00002 * sinDeg(3 * Mprime + M) 
+        -0.40720 * sinDeg(Mprime) + 0.17241 * E * sinDeg(M) + 0.01608 * sinDeg(2 * Mprime) 
+        + 0.01039 * sinDeg(2 * F) + 0.00739 * E * sinDeg(Mprime - M) - 0.00514 * E * sinDeg(Mprime + M) 
+        + 0.00208 * E * E * sinDeg(2 * M) - 0.00111 * sinDeg(Mprime - 2 * F) - 0.00057 * sinDeg(Mprime + 2 * F) 
+        + 0.00056 * E * sinDeg(2 * Mprime + M) - 0.00042 * sinDeg(3 * Mprime) + 0.00042 * E * sinDeg(M + 2 * F) 
+        + 0.00038 * E * sinDeg(M - 2 * F) - 0.00024 * E * sinDeg(2 * Mprime - M) - 0.00017 * sinDeg(OM) 
+        - 0.00007 * sinDeg(Mprime + 2 * M) + 0.00004 * sinDeg(2 * Mprime - 2 * F) + 0.00004 * sinDeg(3 * M) 
+        + 0.00003 * sinDeg(Mprime + M - 2 * F) + 0.00003 * sinDeg(2 * Mprime + 2 * F) - 0.00003 * sinDeg(Mprime + M + 2 * F) 
+        + 0.00003 * sinDeg(Mprime - M + 2 * F) - 0.00002 * sinDeg(Mprime - M - 2 * F) - 0.00002 * sinDeg(3 * Mprime + M) 
         + 0.00002 * sinDeg(4 * Mprime);
         
     let jdTrue = jdMean + correction;
@@ -84,10 +65,24 @@ const getConjunctionTime = (hijriYear, monthIndex) => {
   return getTrueConjunction(approximateMs);
 };
 
-const getGregorianDateString = (date) => {
-  return new Intl.DateTimeFormat('ar-EG', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-  }).format(date);
+const getGregorianDateString = (date, tz) => {
+  try {
+    return new Intl.DateTimeFormat('ar-EG', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: tz
+    }).format(date);
+  } catch (e) {
+    return new Intl.DateTimeFormat('ar-EG', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    }).format(date);
+  }
+};
+
+const formatTime = (date, tz) => {
+  try {
+    return date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: tz });
+  } catch (e) {
+    return date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+  }
 };
 
 export default function YaqeenApp() {
@@ -95,14 +90,17 @@ export default function YaqeenApp() {
   const [selectedMonth, setSelectedMonth] = useState(8); 
   const [isManualYear, setIsManualYear] = useState(false); 
   const [userLocation, setUserLocation] = useState(null);
+  const [locationName, setLocationName] = useState(""); 
   const [results, setResults] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [countdown, setCountdown] = useState(null);
   const [threeLoaded, setThreeLoaded] = useState(false);
+  const [exportTimestamp, setExportTimestamp] = useState(""); 
   
   const [showSplash, setShowSplash] = useState(true);
   const [fadeSplash, setFadeSplash] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
@@ -110,6 +108,7 @@ export default function YaqeenApp() {
   const threeCanvasRef = useRef(null);
   const threeSceneRef = useRef(null);
   const resultsRef = useRef(null);
+  const exportCardRef = useRef(null); 
   const availableYears = generateYears();
 
   const handleVideoEnd = () => {
@@ -117,9 +116,6 @@ export default function YaqeenApp() {
     setTimeout(() => setShowSplash(false), 800); 
   };
 
-  // ==========================================
-  // 2. تحميل المكتبات 
-  // ==========================================
   useEffect(() => {
     const loadScript = (src) => new Promise((resolve, reject) => {
       if (document.querySelector(`script[src="${src}"]`)) return resolve();
@@ -155,9 +151,12 @@ export default function YaqeenApp() {
     mapInstance.current = window.L.map(mapRef.current).setView([25, 45], 2);
     window.L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(mapInstance.current);
 
-    mapInstance.current.on('click', (e) => {
+    mapInstance.current.on('click', async (e) => {
       const { lat, lng } = e.latlng;
-      setUserLocation({ lat, lng });
+      let tzString = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      setUserLocation({ lat, lng, timeZone: tzString });
+      setLocationName("جاري التحديد...");
+      
       if (markerInstance.current) {
         markerInstance.current.setLatLng([lat, lng]);
       } else {
@@ -168,28 +167,62 @@ export default function YaqeenApp() {
         });
         markerInstance.current = window.L.marker([lat, lng], {icon: customIcon}).addTo(mapInstance.current);
       }
+
+      try {
+        const [geoRes, tzRes] = await Promise.all([
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1&accept-language=ar`).catch(()=>null),
+            fetch(`https://api.wheretheiss.at/v1/coordinates/${lat},${lng}`).catch(()=>null)
+        ]);
+
+        if (geoRes && geoRes.ok) {
+            const data = await geoRes.json();
+            const address = data.address || {};
+            const city = address.city || address.town || address.village || address.state || address.county || "";
+            const country = address.country || "";
+            const fullName = city ? `${city}، ${country}` : country || `إحداثيات: ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+            setLocationName(fullName);
+        } else {
+            setLocationName(`إحداثيات: ${lat.toFixed(2)}, ${lng.toFixed(2)}`);
+        }
+
+        let tzSuccess = false;
+        if (tzRes && tzRes.ok) {
+            const tzData = await tzRes.json();
+            if (tzData && tzData.timezone_id) {
+                tzString = tzData.timezone_id;
+                tzSuccess = true;
+            }
+        }
+        
+        if (!tzSuccess) {
+            const timeApiRes = await fetch(`https://timeapi.io/api/TimeZone/coordinate?latitude=${lat}&longitude=${lng}`).catch(()=>null);
+            if (timeApiRes && timeApiRes.ok) {
+                const timeApiData = await timeApiRes.json();
+                if (timeApiData && timeApiData.timeZone) {
+                    tzString = timeApiData.timeZone;
+                }
+            }
+        }
+        
+        setUserLocation({ lat, lng, timeZone: tzString });
+      } catch (err) {
+        setLocationName(`إحداثيات: ${lat.toFixed(2)}, ${lng.toFixed(2)}`);
+      }
     });
   }
 
-  // ==========================================
-  // 3. الحسابات الفلكية
-  // ==========================================
   const calculateFajrTime = (lat, lng, date) => {
     const year = date.getUTCFullYear();
     const start = new Date(Date.UTC(year, 0, 0));
     const dayOfYear = Math.floor((date - start) / (1000 * 60 * 60 * 24));
-    
     const declination = -23.45 * Math.cos((360 / 365) * (dayOfYear + 10) * (Math.PI / 180));
     const latRad = lat * (Math.PI / 180);
     const decRad = declination * (Math.PI / 180);
-    
     let cosHourAngle = (Math.sin(-18 * (Math.PI / 180)) - Math.sin(latRad) * Math.sin(decRad)) / (Math.cos(latRad) * Math.cos(decRad));
     cosHourAngle = Math.max(-1, Math.min(1, cosHourAngle));
     const hourAngle = Math.acos(cosHourAngle) * (180 / Math.PI);
-    
     const equationOfTime = 9.87 * Math.sin(2 * (360/365)*(dayOfYear-81)*(Math.PI/180)) - 7.53 * Math.cos((360/365)*(dayOfYear-81)*(Math.PI/180)) - 1.5 * Math.sin((360/365)*(dayOfYear-81)*(Math.PI/180));
     const solarNoonUTC = 12 - (lng / 15) - (equationOfTime / 60);
-    
     const fajrUTC = solarNoonUTC - (hourAngle / 15);
     const resultDate = new Date(date);
     resultDate.setUTCHours(Math.floor(fajrUTC), Math.floor((fajrUTC % 1) * 60), 0, 0);
@@ -202,7 +235,6 @@ export default function YaqeenApp() {
 
     setTimeout(() => {
       const conjunctionTime = getConjunctionTime(selectedYear, selectedMonth);
-      
       let bestLng = 0; let minDifference = Infinity;
       for (let lng = -180; lng <= 180; lng += 1) {
         const diff = Math.abs(calculateFajrTime(0, lng, conjunctionTime).getTime() - conjunctionTime.getTime());
@@ -212,7 +244,6 @@ export default function YaqeenApp() {
 
       let userFajr = calculateFajrTime(userLocation.lat, userLocation.lng, new Date(conjunctionTime));
       let status = "مباشر";
-      
       if (userFajr.getTime() < conjunctionTime.getTime()) {
         userFajr = calculateFajrTime(userLocation.lat, userLocation.lng, new Date(conjunctionTime.getTime() + 86400000));
         status = "انتظار دوران الأرض (فجر اليوم التالي)";
@@ -228,14 +259,37 @@ export default function YaqeenApp() {
   }, [userLocation, selectedYear, selectedMonth]);
 
   useEffect(() => {
-    if (userLocation) {
-      setTimeout(() => {
-        if (resultsRef.current) {
-          resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 150);
+    if (userLocation && resultsRef.current) {
+      setTimeout(() => resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
     }
   }, [userLocation]);
+
+  const exportAsImage = async () => {
+    if (!exportCardRef.current) return;
+    setExportTimestamp(new Date().toLocaleString('ar-EG'));
+    
+    setTimeout(async () => {
+      try {
+        const canvas = await html2canvas(exportCardRef.current, {
+          scale: 2, 
+          useCORS: true, 
+          backgroundColor: '#0f172a' 
+        });
+        const image = canvas.toDataURL('image/png', 1.0);
+        const link = document.createElement('a');
+        link.href = image;
+        link.download = `Yaqeen_Result_${HIJRI_MONTHS[selectedMonth].split(' ')[0]}_${selectedYear}.png`;
+        link.click();
+      } catch (error) {
+        console.error("حدث خطأ أثناء تصدير الصورة: ", error);
+      }
+    }, 200);
+  };
+
+  const handleOpenPreview = () => {
+    setExportTimestamp(new Date().toLocaleString('ar-EG'));
+    setShowPreview(true);
+  };
 
   // ==========================================
   // 4. المحرك الثلاثي الأبعاد
@@ -415,10 +469,6 @@ export default function YaqeenApp() {
     };
   }, [results, userLocation, threeLoaded]);
   
-
-  // ==========================================
-  // 5. العداد التنازلي
-  // ==========================================
   useEffect(() => {
     if (!results) { setCountdown(null); return; }
     const timer = setInterval(() => {
@@ -442,11 +492,21 @@ export default function YaqeenApp() {
 
   const getMonthSpecificUI = () => {
     switch(selectedMonth) {
-      case 8: return { title: "موعد بداية الصيام (رمضان)", icon: <Moon className="text-teal-100" size={32}/>, color: "from-teal-600 to-emerald-700" };
-      case 9: return { title: "موعد عيد الفطر (نهاية الصيام)", icon: <Star className="text-amber-100" size={32}/>, color: "from-amber-600 to-orange-700" };
-      case 11: return { title: "موعد بداية شهر ذي الحجة", icon: <Globe className="text-indigo-100" size={32}/>, color: "from-indigo-600 to-blue-700", hasAdha: true };
-      case 0: return { title: "موعد رأس السنة الهجرية (المحرم)", icon: <Calendar className="text-purple-100" size={32}/>, color: "from-purple-600 to-fuchsia-700" };
-      default: return { title: "موعد بداية الشهر القمري لمدينتك", icon: <Moon className="text-slate-100" size={32}/>, color: "from-slate-700 to-slate-900" };
+      case 8: return { title: "موعد بداية الصيام (رمضان)" };
+      case 9: return { title: "موعد عيد الفطر المبارك (شوال)" };
+      case 11: return { title: "موعد بداية شهر ذي الحجة" };
+      case 0: return { title: "موعد رأس السنة الهجرية (المحرم)" };
+      default: return { title: "موعد بداية الشهر القمري لمدينتك" };
+    }
+  };
+
+  const getSpecialNote = (monthIndex) => {
+    switch(monthIndex) {
+      case 8: return "بناءً على الحساب الفلكي القطعي لنقلة الفجر، يبدأ الصيام الشرعي مع فجر هذا اليوم بمدينتك المحددة، تقبل الله طاعتكم.";
+      case 9: return "بناءً على الحساب الفلكي القطعي، يحل عيد الفطر المبارك ويفطر المسلمون في هذا اليوم بمدينتك، كل عام وأنتم بخير.";
+      case 11: return "بناءً على الحساب الفلكي القطعي، يبدأ شهر ذي الحجة في هذا اليوم، ويحل عيد الأضحى المبارك في اليوم العاشر منه.";
+      case 0: return "بناءً على الحساب الفلكي القطعي، هذا هو فجر أول أيام العام الهجري الجديد، جعله الله عام خير وبركة.";
+      default: return "بناءً على الحساب الفلكي القطعي، هذا هو فجر أول أيام الشهر القمري لمدينتك المحددة.";
     }
   };
 
@@ -462,6 +522,7 @@ export default function YaqeenApp() {
 
   const uiData = getMonthSpecificUI();
   const displayedGregorianYear = getConjunctionTime(selectedYear || BASE_HIJRI_YEAR, selectedMonth).getUTCFullYear();
+  const monthNameWithoutParentheses = HIJRI_MONTHS[selectedMonth].split(' ')[0];
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 pb-12" dir="rtl" style={{ fontFamily: "'Asmaa', 'Cairo', system-ui, -apple-system, sans-serif" }}>
@@ -485,8 +546,6 @@ export default function YaqeenApp() {
           >
             <source src="intro.mp4" type="video/mp4" />
           </video>
-          
-          {/* زر التخطي الجديد */}
           <button 
             onClick={handleVideoEnd}
             className="absolute bottom-10 left-10 bg-white/40 hover:bg-white/60 backdrop-blur-md text-slate-800 px-6 py-2 rounded-full font-bold border border-white/50 shadow-lg transition-all duration-300 flex items-center gap-2 z-50"
@@ -497,6 +556,138 @@ export default function YaqeenApp() {
         </div>
       )}
 
+      {/* ========================================== */}
+      {/* نافذة معاينة وتصدير النتيجة (المحدثة بالشريط الذهبي والترتيب الصحيح) */}
+      {/* ========================================== */}
+      {showPreview && results && (
+        <div className="fixed inset-0 z-[99999] bg-slate-900/95 backdrop-blur-sm overflow-y-auto">
+          
+          <div className="min-h-screen flex flex-col items-center py-10 px-4">
+            
+            {/* أزرار التحكم بالمعاينة */}
+            <div className="flex gap-4 mb-6 z-10 relative">
+              <button 
+                onClick={exportAsImage} 
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-full font-bold flex gap-2 items-center shadow-lg transition-all"
+              >
+                <Download size={20} /> تحميل الصورة الموثقة
+              </button>
+              <button 
+                onClick={() => setShowPreview(false)} 
+                className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-full font-bold flex gap-2 items-center shadow-lg transition-all"
+              >
+                <X size={20} /> إغلاق المعاينة
+              </button>
+            </div>
+
+            <div className="w-full overflow-x-auto flex justify-center pb-8">
+              
+              {/* --- البطاقة الفعلية التي يتم تصويرها --- */}
+              <div 
+                ref={exportCardRef} 
+                className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[2.5rem] p-10 shadow-2xl relative border-4 border-indigo-500/30" 
+                style={{ width: '850px', minWidth: '850px', maxWidth: 'none', fontFamily: "'Asmaa', 'Cairo', sans-serif" }} 
+                dir="rtl"
+              >
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/20 rounded-full pointer-events-none"></div>
+
+                {/* الترويسة الذهبية الأنيقة (الصلبة) */}
+                <div className="bg-[#ffc107] rounded-xl p-4 mb-8 text-center shadow-md relative z-10 border border-yellow-500">
+                  <h1 className="text-3xl font-black text-slate-900 mb-1">
+                    تطبيق يَقِين للميقات الفلكي
+                  </h1>
+                  <p className="font-bold text-lg text-slate-800">التوثيق الفلكي لضبط أوائل الشهور القمرية والأعياد</p>
+                </div>
+
+                <div className="relative z-10 space-y-6">
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-6 text-center shadow-lg">
+                        <h2 className="text-2xl font-bold text-white mb-2">{uiData.title}</h2>
+                        <p className="text-yellow-400 font-bold text-lg">لعام {selectedYear} هـ / يوافق {displayedGregorianYear} م</p>
+                      </div>
+                      <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-6 text-center shadow-lg">
+                         <div className="text-indigo-200 font-bold mb-2 text-sm">المنطقة الجغرافية المحددة</div>
+                         <div className="font-bold text-2xl flex justify-center items-center gap-2 text-white">
+                           <MapPin className="text-emerald-400" size={24}/> {locationName}
+                         </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#1e2749] rounded-3xl p-6 text-white shadow-lg border border-indigo-500/20">
+                      <div className="text-center mb-5">
+                        <h2 className="text-xl font-bold text-white mb-1">الاقتران المركزي (لحظة ولادة {monthNameWithoutParentheses})</h2>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-[#0f172a] rounded-2xl p-4 border border-white/5 text-center">
+                          <div className="text-indigo-200 font-bold mb-2 text-sm">التوقيت المحلي لبلدك أو مدينتك</div>
+                          <div className="font-bold text-base mb-1">{getGregorianDateString(results.conjunctionTime, userLocation?.timeZone)}</div>
+                          <div className="text-2xl font-mono font-black text-teal-300" dir="ltr">{formatTime(results.conjunctionTime, userLocation?.timeZone)}</div>
+                        </div>
+                        <div className="bg-[#0f172a] rounded-2xl p-4 border border-white/5 text-center">
+                          <div className="text-indigo-200 font-bold mb-2 text-sm">بالتوقيت العالمي (UTC)</div>
+                          <div className="font-bold text-base mb-1">{getGregorianDateString(results.conjunctionTime, 'UTC')}</div>
+                          <div className="text-2xl font-mono font-black text-yellow-400" dir="ltr">{results.conjunctionTime.toLocaleTimeString('en-GB', { timeZone: 'UTC' })}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#0d9488] rounded-3xl p-8 text-white shadow-xl text-center relative overflow-hidden border border-emerald-400/30">
+                      <div className="flex justify-center mb-2"><Moon className="text-teal-100" size={32}/></div>
+                      <h2 className="text-3xl font-bold mb-2">{uiData.title}</h2>
+                      <p className="text-emerald-100 mb-6 font-medium text-sm">بناءً على دوران الأرض ووصول الفجر لمدينتك بعد ولادة الهلال</p>
+                      
+                      <div className="bg-white/95 backdrop-blur-sm text-slate-800 rounded-2xl p-6 mx-auto max-w-xl shadow-2xl">
+                        <div className="text-lg font-bold text-slate-600 mb-4">{getGregorianDateString(results.userFajr, userLocation?.timeZone)}</div>
+                        <div className="text-5xl font-black font-mono text-slate-900 my-4" dir="ltr">
+                          {formatTime(results.userFajr, userLocation?.timeZone)}
+                        </div>
+                        <div className="mt-4 pt-4 border-t-2 border-slate-200">
+                          <span className="text-slate-600 font-bold text-sm bg-slate-100 px-4 py-1 rounded-full border border-slate-200">
+                            حالة الدخول: {results.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* العداد التنازلي بترتيب عكسي لليمين واليسار */}
+                    {countdown && (
+                      <div className="bg-[#0f172a] text-white p-5 rounded-2xl shadow-lg border border-slate-700 flex flex-col md:flex-row items-center justify-between gap-6">
+                        
+                        {/* الجزء الأيمن: النص والأيقونة */}
+                        <div className="flex items-center justify-start gap-3 w-full md:w-auto">
+                          <div className="bg-teal-900/50 p-2 rounded-full border border-teal-500/30">
+                            <Hourglass className="text-teal-400 w-6 h-6" />
+                          </div>
+                          <span className="font-bold text-lg text-slate-200">الوقت المتبقي لمدينتك (حسب الفجر):</span>
+                        </div>
+                        
+                        {/* الجزء الأيسر: العداد الرقمي */}
+                        <div className="bg-[#1e293b] px-6 py-3 rounded-xl border border-[#334155] w-full md:w-auto text-center flex-1 md:flex-none min-w-[350px]">
+                          <span className="font-mono text-xl font-bold text-yellow-400" dir="rtl">{countdown}</span>
+                        </div>
+
+                      </div>
+                    )}
+                </div>
+
+                <div className="text-center text-slate-400 text-sm mt-8 font-bold pt-6 border-t border-white/10 flex justify-between items-center px-4 relative z-10">
+                   <span>تم استخراج هذه النتيجة من منصة "يَقِين"</span>
+                   <span dir="ltr">{exportTimestamp || new Date().toLocaleString('ar-EG')} :تاريخ التوثيق</span>
+                </div>
+
+              </div>
+              {/* --- نهاية البطاقة --- */}
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* واجهة التطبيق الرئيسية (تم تعديل ترتيب العداد هنا أيضاً) */}
+      {/* ========================================== */}
       <header className="bg-indigo-900 text-white p-6 shadow-lg rounded-b-3xl relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4 text-center md:text-right flex-col md:flex-row">
@@ -513,25 +704,20 @@ export default function YaqeenApp() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 space-y-8 mt-8">
-        
         <div className="bg-indigo-50/80 border border-indigo-100 rounded-3xl p-8 shadow-sm flex flex-col items-center gap-6 relative overflow-hidden">
           <Quote className="text-indigo-500/10 absolute top-4 right-4 rotate-180" size={80} />
-          
           <div className="relative z-10 text-center w-full border-b border-indigo-200/60 pb-6">
-            <span 
-              className="text-3xl md:text-4xl text-emerald-800 leading-relaxed font-bold" 
-              style={{ fontFamily: "'Amiri', 'Amiri Quran', serif", wordSpacing: '2px' }}
-            >
+            <span className="text-3xl md:text-4xl text-emerald-800 leading-relaxed font-bold" style={{ fontFamily: "'Amiri', 'Amiri Quran', serif", wordSpacing: '2px' }}>
               ﴿ فَمَن شَهِدَ مِنكُمُ الشَّهْرَ فَلْيَصُمْهُ ﴾
             </span>
           </div>
-          
           <div className="relative z-10 text-center max-w-4xl">
             <p className="text-indigo-950 text-lg md:text-xl leading-loose font-medium">
               هذا التطبيق يقضي تماماً على أي إمكانية لأن يتقدم بلد عن بلد آخر بيوم كامل بشكل عشوائي، بل يجعل البشرية كلها تصوم وتفطر بشكل متسلسل يشبه "موجة متتالية" تبدأ من نقطة محددة وتطوف الأرض كلها في 24 ساعة بالضبط.
             </p>
           </div>
         </div>
+
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-2">
             <label className="font-bold flex items-center gap-2 text-indigo-900"><Calendar size={20}/> الشهر القمري المطلوب:</label>
@@ -541,10 +727,8 @@ export default function YaqeenApp() {
               ))}
             </select>
           </div>
-
           <div className="flex flex-col gap-2">
             <label className="font-bold flex items-center gap-2 text-indigo-900"><Hourglass size={20}/> العام الهجري:</label>
-            
             {!isManualYear ? (
               <select 
                 value={selectedYear} 
@@ -566,10 +750,7 @@ export default function YaqeenApp() {
               <div className="relative flex items-center gap-2 animate-in fade-in zoom-in duration-300">
                 <div className="relative flex-1">
                   <input 
-                    type="number" 
-                    min="1400" 
-                    max="2400" 
-                    value={selectedYear || ''} 
+                    type="number" min="1400" max="2400" value={selectedYear || ''} 
                     onChange={(e) => {
                       let val = parseInt(e.target.value) || '';
                       if (val > 2400) val = 2400; 
@@ -584,16 +765,11 @@ export default function YaqeenApp() {
                     </span>
                   )}
                 </div>
-                <button 
-                  onClick={() => setIsManualYear(false)}
-                  className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition"
-                  title="العودة للقائمة المنسدلة"
-                >
+                <button onClick={() => setIsManualYear(false)} className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition">
                   <X size={20} />
                 </button>
               </div>
             )}
-            
           </div>
         </div>
 
@@ -606,7 +782,7 @@ export default function YaqeenApp() {
         </div>
 
         {userLocation && (
-          <div ref={resultsRef} className="space-y-8 pb-8 mt-8 scroll-mt-6">
+          <div ref={resultsRef} className="space-y-6 pb-8 mt-8 scroll-mt-6">
             {isLoading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
@@ -614,86 +790,81 @@ export default function YaqeenApp() {
               </div>
             ) : results ? (
               <>
-                <div className="bg-[#020205] rounded-3xl p-1 relative overflow-hidden shadow-2xl border-4 border-slate-800">
-                   <div className="absolute top-6 right-6 z-10 bg-black/60 backdrop-blur-md p-4 rounded-xl border border-slate-700 pointer-events-none hidden md:block">
-                     <h3 className="text-white font-bold mb-2 flex items-center gap-2"><Globe className="text-blue-400"/> المحاكاة الفلكية 3D</h3>
-                     <ul className="text-sm text-slate-300 space-y-2">
-                       <li className="flex items-center gap-2"><span className="w-3 h-3 bg-red-600 rounded-full"></span> منحنى الفجر الحقيقي</li>
-                       <li className="flex items-center gap-2"><span className="w-3 h-3 bg-green-400 rounded-full"></span> مدينتك المحددة</li>
-                       <li className="flex items-center gap-2"><span className="w-3 h-3 bg-amber-500 rounded-full"></span> القوس الزمني للمسار</li>
-                     </ul>
-                   </div>
-                   
+                <div className="flex justify-center mb-4">
+                  <button 
+                    onClick={handleOpenPreview}
+                    className="bg-[#00c853] hover:bg-[#00e676] text-white px-8 py-3 rounded-full font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-lg transform hover:-translate-y-1"
+                  >
+                    <Eye size={22} />
+                    معاينة وتوثيق النتيجة كبطاقة
+                  </button>
+                </div>
+
+                <div className="bg-[#020205] rounded-3xl p-1 relative overflow-hidden shadow-xl">
                    <div className="absolute top-6 left-6 z-10 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-slate-700 pointer-events-none flex items-center gap-2 text-white">
                       <Rotate3D size={18} className="text-teal-400" />
                       <span className="text-sm font-bold">اسحب للتدوير</span>
                    </div>
-
                    <div ref={threeCanvasRef} className="w-full h-[500px] cursor-grab active:cursor-grabbing rounded-2xl overflow-hidden bg-[#020205]"></div>
-                   
                    <div className="text-center p-4 bg-slate-900 text-teal-300 text-sm md:text-base rounded-b-2xl border-t border-slate-800 leading-relaxed">
                      <strong>دلالة المحاكاة:</strong> الخط الأحمر يمثل <strong>"منحنى الفجر الصادق"</strong> (عند زاوية 18 درجة تحت الأفق). ستلاحظ تواجده داخل منطقة الظلام ليسبق شروق الشمس، وهو يُعبّر عن <strong>نقطة الصفر العالمية</strong> التي يبدأ منها الصيام ليطوف الأرض تباعاً مع دورانها.
                    </div>
                 </div>
 
-                <div className="bg-[#1e2749] rounded-3xl p-6 text-white shadow-xl">
+                <div className="bg-[#1e2749] rounded-3xl p-6 text-white shadow-md mt-6">
                   <div className="text-center mb-6">
-                    <h2 className="text-2xl font-bold text-white mb-2">الاقتران المركزي (لحظة ولادة {HIJRI_MONTHS[selectedMonth].split(' ')[0]})</h2>
+                    <h2 className="text-2xl font-bold text-white mb-2">الاقتران المركزي (لحظة ولادة {monthNameWithoutParentheses})</h2>
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div className="bg-white/10 rounded-2xl p-5 border border-white/5">
+                    <div className="bg-white/10 rounded-2xl p-5 border border-white/5 text-center">
+                      <div className="text-indigo-200 font-bold mb-3">التوقيت المحلي لبلدك أو مدينتك</div>
+                      <div className="font-bold text-lg mb-1">{getGregorianDateString(results.conjunctionTime, userLocation?.timeZone)}</div>
+                      <div className="text-3xl font-mono font-black text-teal-300" dir="ltr">{formatTime(results.conjunctionTime, userLocation?.timeZone)}</div>
+                    </div>
+                    <div className="bg-white/10 rounded-2xl p-5 border border-white/5 text-center">
                       <div className="text-indigo-200 font-bold mb-3">بالتوقيت العالمي (UTC)</div>
-                      <div className="font-bold text-lg mb-1">{getGregorianDateString(results.conjunctionTime)}</div>
+                      <div className="font-bold text-lg mb-1">{getGregorianDateString(results.conjunctionTime, 'UTC')}</div>
                       <div className="text-3xl font-mono font-black text-yellow-400" dir="ltr">{results.conjunctionTime.toLocaleTimeString('en-GB', { timeZone: 'UTC' })}</div>
                     </div>
-                    <div className="bg-white/10 rounded-2xl p-5 border border-white/5">
-                      <div className="text-indigo-200 font-bold mb-3">التوقيت المحلي لبلدك أو مدينتك</div>
-                      <div className="font-bold text-lg mb-1">{getGregorianDateString(results.conjunctionTime)}</div>
-                      <div className="text-3xl font-mono font-black text-teal-300" dir="ltr">{results.conjunctionTime.toLocaleTimeString('ar-EG', timeOnlyOptions)}</div>
+                  </div>
+                </div>
+
+                <div className="bg-[#0d9488] rounded-3xl p-8 text-white shadow-md text-center mt-6">
+                  <div className="flex justify-center mb-2"><Moon className="text-teal-100" size={32}/></div>
+                  <h2 className="text-3xl font-bold mb-2">{uiData.title}</h2>
+                  <p className="text-white/80 mb-6 font-medium text-sm">بناءً على دوران الأرض ووصول الفجر لمدينتك بعد ولادة الهلال</p>
+                  
+                  <div className="bg-slate-50 text-slate-800 rounded-2xl p-6 mx-auto max-w-2xl shadow-lg">
+                    <div className="text-lg font-bold text-slate-600 mb-4">{getGregorianDateString(results.userFajr, userLocation?.timeZone)}</div>
+                    <div className="text-6xl font-black font-mono text-slate-900 my-4" dir="ltr">
+                      {formatTime(results.userFajr, userLocation?.timeZone)}
+                    </div>
+                    <div className="mt-4 pt-4 border-t-2 border-slate-200">
+                      <span className="text-slate-500 font-bold text-sm">
+                        حالة الدخول: {results.status}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                <div className={`bg-gradient-to-br ${uiData.color} rounded-3xl p-8 text-white shadow-xl text-center relative overflow-hidden`}>
-                  <div className="relative z-10">
-                    <div className="flex justify-center mb-4">{uiData.icon}</div>
-                    <h2 className="text-3xl md:text-4xl font-extrabold mb-3">{uiData.title}</h2>
-                    <p className="text-white/80 mb-8 font-medium">بناءً على دوران الأرض ووصول الفجر لمدينتك بعد ولادة الهلال</p>
-                    
-                    <div className="bg-white text-slate-800 rounded-2xl p-8 mx-auto max-w-2xl shadow-2xl">
-                      <div className="text-xl font-bold text-slate-600 mb-4">{getGregorianDateString(results.userFajr)}</div>
-                      <div className="text-6xl md:text-7xl font-black font-mono tracking-wider text-slate-900 my-6" dir="ltr">
-                        {results.userFajr.toLocaleTimeString('ar-EG', timeOnlyOptions)}
+                {/* العداد التنازلي في التطبيق الرئيسي (ترتيب معكوس) */}
+                {countdown && (
+                  <div className="bg-[#0f172a] text-white p-5 rounded-3xl shadow-md border border-[#1e293b] mt-6 mb-4">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                      
+                      {/* النص والأيقونة - إلى اليمين */}
+                      <div className="flex items-center justify-start gap-3 w-full md:w-auto">
+                        <div className="bg-teal-900/50 p-2 rounded-full border border-teal-500/30">
+                          <Hourglass className="text-teal-400 w-6 h-6" />
+                        </div>
+                        <span className="font-bold text-lg text-slate-200">الوقت المتبقي لمدينتك (حسب الفجر):</span>
                       </div>
                       
-                      <div className="mt-6 pt-6 border-t-2 border-slate-100">
-                        <span className="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-bold">
-                          حالة الدخول: <span className="text-teal-700">{results.status}</span>
-                        </span>
+                      {/* المربع الرقمي - إلى اليسار */}
+                      <div className="bg-[#1e293b] px-6 py-3 rounded-xl border border-[#334155] w-full md:w-auto text-center flex-1 md:flex-none min-w-[350px]">
+                        <span className="font-mono text-xl font-bold text-yellow-400" dir="rtl">{countdown}</span>
                       </div>
-                    </div>
 
-                    {uiData.hasAdha && (
-                      <div className="mt-8 bg-black/20 p-6 rounded-2xl border border-white/10">
-                        <h3 className="text-xl font-bold text-yellow-300 mb-2">موعد عيد الأضحى المبارك (10 ذي الحجة)</h3>
-                        <p className="text-lg">
-                          يوافق يوم: <strong className="text-white">{getGregorianDateString(new Date(results.userFajr.getTime() + (9 * 86400000)))}</strong>
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {countdown && (
-                  <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-xl border border-slate-700 mt-8 mb-4">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                      <div className="flex items-center gap-4">
-                        <div className="bg-teal-500/20 p-3 rounded-full"><Hourglass className="text-teal-400 animate-pulse w-8 h-8" /></div>
-                        <span className="font-bold text-xl">الوقت المتبقي لمدينتك (حسب الفجر):</span>
-                      </div>
-                      <div className="bg-slate-800 px-8 py-4 rounded-2xl border-2 border-slate-600 font-mono text-2xl font-black text-yellow-400 text-center w-full md:w-auto shadow-inner" dir="rtl">
-                        {countdown}
-                      </div>
                     </div>
                   </div>
                 )}
@@ -704,7 +875,7 @@ export default function YaqeenApp() {
       </main>
 
       {/* ========================================== */}
-      {/* نافذة "عن التطبيق" المطورة (المقال الشامل) */}
+      {/* نافذة "عن التطبيق" (المقال الشامل) */}
       {/* ========================================== */}
       {isAboutOpen && (
         <div className="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 md:p-6">
@@ -712,63 +883,42 @@ export default function YaqeenApp() {
             <button onClick={() => setIsAboutOpen(false)} className="absolute top-6 left-6 p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition z-20">
               <X size={24} className="text-slate-600" />
             </button>
-            
             <div className="p-8 md:p-12">
-              
-              {/* ترويسة النافذة */}
               <div className="flex items-center gap-4 mb-8 border-b pb-6">
                 <Globe size={40} className="text-indigo-600" />
                 <h2 className="text-3xl font-black text-indigo-900">عن تطبيق يَقِين</h2>
               </div>
-              
-              {/* المقدمة القصيرة */}
-<div className="space-y-6 text-lg text-slate-700 leading-relaxed font-medium mb-10">
-  <p>
-    في كل عام تتكرر مأساة اختلاف المسلمين في بدايات الشهور والأعياد، وهذا التطبيق هو الحل العلمي والشرعي القطعي لتوحيدها باستخدام الحسابات الفلكية الدقيقة.
-  </p>
-  
-  <div className="bg-indigo-50 border-r-4 border-indigo-600 p-6 rounded-l-xl">
-    <h3 className="font-bold text-indigo-900 text-xl mb-3">القاعدة الصارمة (نقلة الفجر):</h3>
-    <p>
-      الاقتران المركزي (ميلاد القمر) هو لحظة كونية واحدة لكل الأرض. المنطقة الجغرافية التي يتوافق فجرها تماماً مع لحظة الميلاد تصبح هي "نقطة الصفر" العالمية.
-    </p>
-  </div>
+              <div className="space-y-6 text-lg text-slate-700 leading-relaxed font-medium mb-10">
+                <p>في كل عام تتكرر مأساة اختلاف المسلمين في بدايات الشهور والأعياد، وهذا التطبيق هو الحل العلمي والشرعي القطعي لتوحيدها باستخدام حسابات كوكب الأرض.</p>
+                <div className="bg-indigo-50 border-r-4 border-indigo-600 p-6 rounded-l-xl">
+                  <h3 className="font-bold text-indigo-900 text-xl mb-3">القاعدة الصارمة (نقلة الفجر):</h3>
+                  <p>الاقتران المركزي (ميلاد القمر) هو لحظة كونية واحدة لكل الأرض. المنطقة الجغرافية التي يتوافق فجرها تماماً مع لحظة الميلاد تصبح هي "نقطة الصفر" العالمية.</p>
+                </div>
+                <p>
+                  <strong className="text-indigo-900">لماذا الفجر في جميع الشهور؟</strong> لأن المسلم يسأل ليلة الشك (في رمضان أو العيد): "هل أستيقظ غداً صائماً أم مفطراً؟". الفجر هو حد البداية الفعلي لليوم في سياق الصيام. إذا ولد الهلال قبل فجرك، تبدأ شهرك، وإن ولد بعده، تكمل عدتك.
+                </p>
+                <p className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-100 p-5 rounded-xl shadow-sm">
+                  هذا التطبيق مزود بمحرك فلكي يحسب لحظة الاقتران بدقة متناهية تتفق مع أكبر المواقع العلمية المتخصصة تماماً، مما يتيح لك معرفة أوائل الشهور والأعياد بضغطة زر لقرون قادمة.
+                </p>
+              </div>
 
-  <p>
-    <strong className="text-indigo-900">لماذا الفجر في جميع الشهور؟</strong> لأن المسلم يسأل ليلة الشك (في رمضان أو العيد): "هل أستيقظ غداً صائماً أم مفطراً؟". الفجر هو حد البداية الفعلي لليوم في سياق الصيام. إذا ولد الهلال قبل فجرك، تبدأ شهرك، وإن ولد بعده، تكمل عدتك.
-  </p>
-
-  <p className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-100 p-5 rounded-xl shadow-sm">
-    هذا التطبيق مزود بمحرك فلكي يحسب لحظة الاقتران بدقة متناهية تتفق مع أكبر المواقع العلمية المتخصصة تماماً، مما يتيح لك معرفة أوائل الشهور والأعياد بضغطة زر لقرون قادمة.
-  </p>
-</div>
-
-              {/* بداية المقال الشامل */}
               <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 md:p-10 shadow-inner">
-                
                 <div className="text-center mb-10">
                   <h3 className="text-3xl md:text-4xl text-emerald-800 leading-relaxed font-bold mb-4" style={{ fontFamily: "'Amiri', 'Amiri Quran', serif" }}>
                     ﴿ فَمَن شَهِدَ مِنكُمُ الشَّهْرَ فَلْيَصُمْهُ ﴾
                   </h3>
                   <p className="text-xl text-indigo-900 font-bold">دراسة في الصياغة القرآنية وتوحيد صيام المسلمين</p>
                 </div>
-
                 <div className="space-y-8 text-slate-700 leading-loose text-lg font-medium">
-                  <p>
-                    في هذا المقال، سنغوص في دلالات ومعاني الحروف والكلمات في قوله تعالى: <span className="text-emerald-700 font-bold">﴿ فَمَن شَهِدَ مِنكُمُ الشَّهْرَ فَلْيَصُمْهُ ﴾</span>، من خلال تدبر الصياغة القرآنية الدقيقة. هدفنا هو محاولة الإجابة على سؤال طالما شغل بال الكثيرين: هل يمكن توحيد المسلمين في بدء شهر الصيام؟
-                  </p>
-
+                  <p>في هذا المقال، سنغوص في دلالات ومعاني الحروف والكلمات في قوله تعالى: <span className="text-emerald-700 font-bold">﴿ فَمَن شَهِدَ مِنكُمُ الشَّهْرَ فَلْيَصُمْهُ ﴾</span>، من خلال تدبر الصياغة القرآنية الدقيقة. هدفنا هو محاولة الإجابة على سؤال طالما شغل بال الكثيرين: هل يمكن توحيد المسلمين في بدء شهر الصيام؟</p>
                   <div className="bg-white p-6 md:p-8 rounded-2xl border-r-4 border-emerald-500 shadow-sm text-center my-8">
                     <p className="text-emerald-800 text-xl md:text-2xl leading-loose font-bold" style={{ fontFamily: "'Amiri', 'Amiri Quran', serif" }}>
                       ﴿ شَهْرُ رَمَضَانَ الَّذِي أُنزِلَ فِيهِ الْقُرْآنُ هُدًى لِّلنَّاسِ وَبَيِّنَاتٍ مِّنَ الْهُدَىٰ وَالْفُرْقَانِ ۚ فَمَن شَهِدَ مِنكُمُ الشَّهْرَ فَلْيَصُمْهُ ۖ وَمَن كَانَ مَرِيضًا أَوْ عَلَىٰ سَفَرٍ فَعِدَّةٌ مِّنْ أَيَّامٍ أُخَرَ ۗ يُرِيدُ اللَّهُ بِكُمُ الْيُسْرَ وَلَا يُرِيدُ بِكُمُ الْعُسْرَ وَلِتُكْمِلُوا الْعِدَّةَ وَلِتُكَبِّرُوا اللَّهَ عَلَىٰ مَا هَدَاكُمْ وَلَعَلَّكُمْ تَشْكُرُونَ ﴾
                     </p>
                   </div>
-
-                  {/* القسم الأول */}
                   <div className="mt-12">
                     <h4 className="text-2xl font-bold text-indigo-900 border-b-2 border-indigo-100 pb-2 mb-6 flex items-center gap-3">
-                      <span className="w-3 h-3 bg-indigo-500 rounded-full inline-block rotate-45"></span>
-                      ملاحظات حول الصياغة اللغوية
+                      <span className="w-3 h-3 bg-indigo-500 rounded-full inline-block rotate-45"></span> ملاحظات حول الصياغة اللغوية
                     </h4>
                     <ul className="space-y-6 list-none pr-4 border-r-2 border-indigo-100">
                       <li className="relative before:absolute before:right-[-1.45rem] before:top-3 before:w-3 before:h-3 before:bg-indigo-400 before:rounded-full">
@@ -793,15 +943,11 @@ export default function YaqeenApp() {
                       </li>
                     </ul>
                   </div>
-
-                  {/* القسم الثاني */}
                   <div className="mt-12">
                     <h4 className="text-2xl font-bold text-indigo-900 border-b-2 border-indigo-100 pb-2 mb-6 flex items-center gap-3">
-                      <span className="w-3 h-3 bg-teal-500 rounded-full inline-block rotate-45"></span>
-                      دلالات جذر "شهد" في القرآن
+                      <span className="w-3 h-3 bg-teal-500 rounded-full inline-block rotate-45"></span> دلالات جذر "شهد" في القرآن
                     </h4>
                     <p className="mb-6">الجذر "شهد" يعني الإقرار والتأكيد على مسألة بناءً على الإيمان، أو العلم، أو المعايشة (الحضور الزماني والمكاني للحدث). ويتضح الفارق الكبير بين مشتقاته في القرآن كالتالي:</p>
-                    
                     <div className="grid md:grid-cols-2 gap-6 mb-6">
                       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-md">
                         <div className="flex items-center gap-2 mb-3">
@@ -818,19 +964,13 @@ export default function YaqeenApp() {
                         <p className="text-base leading-relaxed text-slate-600">وهو الذي حضر الحدث وعايشه زمانًا ومكانًا بنفسه. كقوله تعالى: <span className="text-emerald-700 font-bold">﴿ وَاسْتَشْهِدُوا شَهِيدَيْنِ مِن رِّجَالِكُمْ ﴾</span>.</p>
                       </div>
                     </div>
-                    
                     <div className="bg-teal-50 border-r-4 border-teal-500 text-teal-900 p-6 rounded-l-2xl">
-                      <p className="text-lg">
-                        من إعجاز القرآن أن كلمة <span className="text-emerald-700 font-bold">"شَهِدَ"</span> في آية الصيام استوعبت كلا المعنيين معاً: <strong>عاش وحضر</strong> (الحضور الزماني والمكاني)، وكان <strong>صحيحاً عاقلاً يمتلك المعرفة العلمية اليقينية</strong> بحلول الشهر.
-                      </p>
+                      <p className="text-lg">من إعجاز القرآن أن كلمة <span className="text-emerald-700 font-bold">"شَهِدَ"</span> في آية الصيام استوعبت كلا المعنيين معاً: <strong>عاش وحضر</strong> (الحضور الزماني والمكاني)، وكان <strong>صحيحاً عاقلاً يمتلك المعرفة العلمية اليقينية</strong> بحلول الشهر.</p>
                     </div>
                   </div>
-
-                  {/* القسم الثالث */}
                   <div className="mt-12">
                     <h4 className="text-2xl font-bold text-indigo-900 border-b-2 border-indigo-100 pb-2 mb-6 flex items-center gap-3">
-                      <span className="w-3 h-3 bg-amber-500 rounded-full inline-block rotate-45"></span>
-                      الحضور الزماني والمكاني وتوحيد الصيام
+                      <span className="w-3 h-3 bg-amber-500 rounded-full inline-block rotate-45"></span> الحضور الزماني والمكاني وتوحيد الصيام
                     </h4>
                     <ul className="space-y-6 list-none pr-4 border-r-2 border-amber-200">
                       <li className="relative before:absolute before:right-[-1.45rem] before:top-3 before:w-3 before:h-3 before:bg-amber-400 before:rounded-full">
@@ -847,33 +987,23 @@ export default function YaqeenApp() {
                       </li>
                     </ul>
                   </div>
-
-                  {/* الخاتمة */}
                   <div className="bg-indigo-900 text-white p-8 rounded-3xl shadow-2xl mt-12 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-bl-full"></div>
                     <h4 className="text-2xl font-bold text-yellow-400 mb-4 relative z-10">نحو تصور عملي لتوحيد صيام المسلمين</h4>
                     <p className="leading-loose text-lg text-indigo-50 relative z-10">
-                      بناءً على ما سبق، يقدم هذا التطبيق نظاماً يجمع المسلمين على صيام واحد منضبط:
-                      بمجرد ولادة الهلال، ستكون هناك <strong>بقعة واحدة فقط</strong> على الأرض يوافق فيها "وقت الفجر المحلي" لحظة "ولادة الهلال". هذا المكان هو نقطة الصفر وأول من يبدأ الصيام لتطابق الزمان والمكان فيه. 
-                      أما باقي بلدان العالم، فعليها الانتظار حتى يطوف عليها الفجر، لتبدأ الصيام تباعاً، لتكتمل الدورة في 24 ساعة ويصوم جميع المسلمين بناءً على بداية كونية واحدة لا مجال فيها للاختلاف أو الأهواء.
+                      بناءً على ما سبق، يقدم هذا التطبيق نظاماً يجمع المسلمين على صيام واحد منضبط: بمجرد ولادة الهلال، ستكون هناك <strong>بقعة واحدة فقط</strong> على الأرض يوافق فيها "وقت الفجر المحلي" لحظة "ولادة الهلال". هذا المكان هو نقطة الصفر وأول من يبدأ الصيام لتطابق الزمان والمكان فيه. أما باقي بلدان العالم، فعليها الانتظار حتى يطوف عليها الفجر، لتبدأ الصيام تباعاً، لتكتمل الدورة في 24 ساعة ويصوم جميع المسلمين بناءً على بداية كونية واحدة لا مجال فيها للاختلاف أو الأهواء.
                     </p>
                   </div>
-
                 </div>
               </div>
-
-              {/* قسم بيانات المؤلف */}
               <div className="mt-12 pt-10 border-t border-slate-200 text-center flex flex-col items-center justify-center pb-8">
                 <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-6 shadow-sm border border-indigo-100">
                   <BookOpen size={36} strokeWidth={1.5} />
                 </div>
                 <p className="text-slate-500 mb-2 font-bold tracking-wider">إعداد فكرة وتصميم التطبيق</p>
                 <p className="text-3xl font-black text-indigo-900 font-serif mb-3">أحمد طلعت</p>
-                <a href="mailto:ahmadalazab2022@gmail.com" className="text-indigo-600 hover:text-indigo-800 hover:underline font-mono text-lg transition-colors bg-indigo-50 px-4 py-2 rounded-lg">
-                  ahmadalazab2022@gmail.com
-                </a>
+                <a href="mailto:ahmadalazab2022@gmail.com" className="text-indigo-600 hover:text-indigo-800 hover:underline font-mono text-lg transition-colors bg-indigo-50 px-4 py-2 rounded-lg">ahmadalazab2022@gmail.com</a>
               </div>
-
             </div>
           </div>
         </div>
