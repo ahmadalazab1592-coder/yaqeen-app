@@ -557,14 +557,13 @@ export default function YaqeenApp() {
       )}
 
       {/* ========================================== */}
-      {/* نافذة معاينة وتصدير النتيجة (المحدثة بالشريط الذهبي والترتيب الصحيح) */}
+      {/* نافذة معاينة وتصدير النتيجة (البطاقة الفاخرة) */}
       {/* ========================================== */}
       {showPreview && results && (
         <div className="fixed inset-0 z-[99999] bg-slate-900/95 backdrop-blur-sm overflow-y-auto">
           
           <div className="min-h-screen flex flex-col items-center py-10 px-4">
             
-            {/* أزرار التحكم بالمعاينة */}
             <div className="flex gap-4 mb-6 z-10 relative">
               <button 
                 onClick={exportAsImage} 
@@ -582,7 +581,6 @@ export default function YaqeenApp() {
 
             <div className="w-full overflow-x-auto flex justify-center pb-8">
               
-              {/* --- البطاقة الفعلية التي يتم تصويرها --- */}
               <div 
                 ref={exportCardRef} 
                 className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[2.5rem] p-10 shadow-2xl relative border-4 border-indigo-500/30" 
@@ -592,12 +590,12 @@ export default function YaqeenApp() {
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full pointer-events-none"></div>
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/20 rounded-full pointer-events-none"></div>
 
-                {/* الترويسة الذهبية الأنيقة (الصلبة) */}
-                <div className="bg-[#ffc107] rounded-xl p-4 mb-8 text-center shadow-md relative z-10 border border-yellow-500">
-                  <h1 className="text-3xl font-black text-slate-900 mb-1">
+                <div className="text-center pb-6 border-b border-white/10 mb-8 relative z-10">
+                  <Globe className="text-yellow-400 mx-auto mb-4 drop-shadow-md" size={60} />
+                  <h1 className="text-4xl font-black text-yellow-400 mb-2 drop-shadow-md">
                     تطبيق يَقِين للميقات الفلكي
                   </h1>
-                  <p className="font-bold text-lg text-slate-800">التوثيق الفلكي لضبط أوائل الشهور القمرية والأعياد</p>
+                  <p className="text-indigo-200 text-lg font-bold">التوثيق الفلكي لضبط أوائل الشهور القمرية والأعياد</p>
                 </div>
 
                 <div className="relative z-10 space-y-6">
@@ -651,11 +649,8 @@ export default function YaqeenApp() {
                       </div>
                     </div>
 
-                    {/* العداد التنازلي بترتيب عكسي لليمين واليسار */}
                     {countdown && (
                       <div className="bg-[#0f172a] text-white p-5 rounded-2xl shadow-lg border border-slate-700 flex flex-col md:flex-row items-center justify-between gap-6">
-                        
-                        {/* الجزء الأيمن: النص والأيقونة */}
                         <div className="flex items-center justify-start gap-3 w-full md:w-auto">
                           <div className="bg-teal-900/50 p-2 rounded-full border border-teal-500/30">
                             <Hourglass className="text-teal-400 w-6 h-6" />
@@ -663,11 +658,9 @@ export default function YaqeenApp() {
                           <span className="font-bold text-lg text-slate-200">الوقت المتبقي لمدينتك (حسب الفجر):</span>
                         </div>
                         
-                        {/* الجزء الأيسر: العداد الرقمي */}
                         <div className="bg-[#1e293b] px-6 py-3 rounded-xl border border-[#334155] w-full md:w-auto text-center flex-1 md:flex-none min-w-[350px]">
                           <span className="font-mono text-xl font-bold text-yellow-400" dir="rtl">{countdown}</span>
                         </div>
-
                       </div>
                     )}
                 </div>
@@ -678,15 +671,13 @@ export default function YaqeenApp() {
                 </div>
 
               </div>
-              {/* --- نهاية البطاقة --- */}
-
             </div>
           </div>
         </div>
       )}
 
       {/* ========================================== */}
-      {/* واجهة التطبيق الرئيسية (تم تعديل ترتيب العداد هنا أيضاً) */}
+      {/* واجهة التطبيق الرئيسية */}
       {/* ========================================== */}
       <header className="bg-indigo-900 text-white p-6 shadow-lg rounded-b-3xl relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -801,6 +792,29 @@ export default function YaqeenApp() {
                 </div>
 
                 <div className="bg-[#020205] rounded-3xl p-1 relative overflow-hidden shadow-xl">
+                   
+                   {/* العلامات التوضيحية للألوان (التي تمت إضافتها) */}
+                   <div className="absolute top-6 right-6 z-10 bg-black/60 backdrop-blur-md p-4 rounded-xl border border-slate-700 pointer-events-none hidden md:block text-right">
+                     <h3 className="text-white font-bold mb-3 flex items-center gap-2 justify-start">
+                       <Globe className="text-blue-400" size={18} /> 
+                       المحاكاة الفلكية 3D
+                     </h3>
+                     <ul className="text-sm text-slate-300 space-y-3">
+                       <li className="flex items-center gap-3">
+                         <span className="w-3 h-3 bg-[#ff0000] rounded-full shadow-[0_0_8px_#ff0000]"></span> 
+                         <span>منحنى الفجر الحقيقي</span>
+                       </li>
+                       <li className="flex items-center gap-3">
+                         <span className="w-3 h-3 bg-[#00ff88] rounded-full shadow-[0_0_8px_#00ff88]"></span> 
+                         <span>مدينتك المحددة</span>
+                       </li>
+                       <li className="flex items-center gap-3">
+                         <span className="w-3 h-3 bg-[#ffaa00] rounded-full shadow-[0_0_8px_#ffaa00]"></span> 
+                         <span>القوس الزمني للمسار</span>
+                       </li>
+                     </ul>
+                   </div>
+
                    <div className="absolute top-6 left-6 z-10 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-slate-700 pointer-events-none flex items-center gap-2 text-white">
                       <Rotate3D size={18} className="text-teal-400" />
                       <span className="text-sm font-bold">اسحب للتدوير</span>
@@ -847,12 +861,9 @@ export default function YaqeenApp() {
                   </div>
                 </div>
 
-                {/* العداد التنازلي في التطبيق الرئيسي (ترتيب معكوس) */}
                 {countdown && (
                   <div className="bg-[#0f172a] text-white p-5 rounded-3xl shadow-md border border-[#1e293b] mt-6 mb-4">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                      
-                      {/* النص والأيقونة - إلى اليمين */}
                       <div className="flex items-center justify-start gap-3 w-full md:w-auto">
                         <div className="bg-teal-900/50 p-2 rounded-full border border-teal-500/30">
                           <Hourglass className="text-teal-400 w-6 h-6" />
@@ -860,11 +871,9 @@ export default function YaqeenApp() {
                         <span className="font-bold text-lg text-slate-200">الوقت المتبقي لمدينتك (حسب الفجر):</span>
                       </div>
                       
-                      {/* المربع الرقمي - إلى اليسار */}
                       <div className="bg-[#1e293b] px-6 py-3 rounded-xl border border-[#334155] w-full md:w-auto text-center flex-1 md:flex-none min-w-[350px]">
                         <span className="font-mono text-xl font-bold text-yellow-400" dir="rtl">{countdown}</span>
                       </div>
-
                     </div>
                   </div>
                 )}
